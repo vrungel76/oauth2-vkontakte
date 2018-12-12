@@ -5,20 +5,21 @@ namespace J4k\OAuth2\Client\Provider;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
+use League\OAuth2\Client\Tool\BearerAuthorizationTrait;
 use Psr\Http\Message\ResponseInterface;
 
 class Vkontakte extends AbstractProvider
 {
     protected $baseOAuthUri = 'https://oauth.vk.com';
     protected $baseUri      = 'https://api.vk.com/method';
-    protected $version      = '5.52';
-    protected $language     = null;
+    protected $version      = '5.63';
+
 
     /**
      * @type array
      * @see https://vk.com/dev/permissions
      */
-    public $scopes = [
+    public $vk_scopes = [
         'email',
         'friends',
         'offline',
@@ -112,16 +113,6 @@ class Vkontakte extends AbstractProvider
         //'wall_comments',
     ];
 
-    /**
-     * @param string $language
-     */
-    public function setLanguage($language)
-    {
-        $this->language = (string)$language;
-
-        return $this;
-    }
-
     public function getBaseAuthorizationUrl()
     {
         return "$this->baseOAuthUri/authorize";
@@ -136,7 +127,6 @@ class Vkontakte extends AbstractProvider
             'fields'       => $this->userFields,
             'access_token' => $token->getToken(),
             'v'            => $this->version,
-            'lang'         => $this->language
         ];
         $query  = $this->buildQueryString($params);
         $url    = "$this->baseUri/users.get?$query";
@@ -145,7 +135,7 @@ class Vkontakte extends AbstractProvider
     }
     protected function getDefaultScopes()
     {
-        return $this->scopes;
+        return $this->vk_scopes;
     }
     protected function checkResponse(ResponseInterface $response, $data)
     {
@@ -180,6 +170,7 @@ class Vkontakte extends AbstractProvider
     {
         $response   = reset($response['response']);
         $additional = $token->getValues();
+error_log("VK DEBUG 3".print_r($additional,true));
         if (!empty($additional['email'])) {
             $response['email'] = $additional['email'];
         }
@@ -189,8 +180,8 @@ class Vkontakte extends AbstractProvider
         if (!empty($additional['user_id'])) {
             $response['id'] = $additional['user_id'];
         }
-
-        return new User($response, $response['id']);
+error_log("VK DEBUG 1".print_r($response,true));
+        return new VkontakteResourceOwner($response);
     }
 
     /**
@@ -200,20 +191,19 @@ class Vkontakte extends AbstractProvider
      * @param AccessToken|null $token Current user if empty
      * @param array            $params
      *
-     * @return User[]
+     * @return VkontakteResourceOwner[]
      */
     public function usersGet(array $ids = [], AccessToken $token = null, array $params = [])
     {
         if (empty($ids) && !$token) {
             throw new \InvalidArgumentException('Some of parameters usersIds OR access_token are required');
         }
-
+error_log("VK DEBUG SCOPES".print_r($this->userFields,true));
         $default = [
             'user_ids'     => implode(',', $ids),
             'fields'       => $this->userFields,
             'access_token' => $token ? $token->getToken() : null,
             'v'            => $this->version,
-            'lang'         => $this->language
         ];
         $params  = array_merge($default, $params);
         $query   = $this->buildQueryString($params);
@@ -222,7 +212,7 @@ class Vkontakte extends AbstractProvider
         $response   = $this->getResponse($this->createRequest(static::METHOD_GET, $url, $token, []))['response'];
         $users      = !empty($response['items']) ? $response['items'] : $response;
         $array2user = function ($userData) {
-            return new User($userData);
+            return new VkontakteResourceOwner($userData);
         };
 
         return array_map($array2user, $users);
@@ -234,7 +224,7 @@ class Vkontakte extends AbstractProvider
      * @param AccessToken|null $token
      * @param array            $params
      *
-     * @return User[]
+     * @return VkontakteResourceOwner[]
      */
     public function friendsGet($userId, AccessToken $token = null, array $params = [])
     {
@@ -243,7 +233,6 @@ class Vkontakte extends AbstractProvider
             'fields'       => $this->userFields,
             'access_token' => $token ? $token->getToken() : null,
             'v'            => $this->version,
-            'lang'         => $this->language
         ];
         $params  = array_merge($default, $params);
         $query   = $this->buildQueryString($params);
@@ -256,7 +245,7 @@ class Vkontakte extends AbstractProvider
                 $friendData = ['id' => $friendData];
             }
 
-            return new User($friendData);
+            return new VkontakteResourceOwner($friendData);
         };
 
         return array_map($array2friend, $friends);
