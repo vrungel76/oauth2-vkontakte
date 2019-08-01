@@ -207,7 +207,7 @@ class VkontakteTest extends \PHPUnit_Framework_TestCase
 
         static::assertEquals('/access_token', $uri['path']);
     }
-    public function testResourceOwnerDetailsUrlNotContainLanguage()
+/*    public function testResourceOwnerDetailsUrlNotContainLanguage()
     {
         $url = $this->provider->getResourceOwnerDetailsUrl($this->getMockAccessTokenObject());
         $uri = parse_url($url);
@@ -224,10 +224,10 @@ class VkontakteTest extends \PHPUnit_Framework_TestCase
 
         static::assertArrayHasKey('lang', $params);
         static::assertEquals('en', $params['lang']);
-    }
+    }*/
     public function testScopes()
     {
-        static::assertEquals($this->defaultScopes, $this->provider->scopes);
+        static::assertEquals($this->defaultScopes, $this->provider->vk_scopes);
     }
 
     public function testCheckResponseSuccess()

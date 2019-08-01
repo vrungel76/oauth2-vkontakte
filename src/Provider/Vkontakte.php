@@ -5,7 +5,6 @@ namespace J4k\OAuth2\Client\Provider;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
-use League\OAuth2\Client\Tool\BearerAuthorizationTrait;
 use Psr\Http\Message\ResponseInterface;
 
 class Vkontakte extends AbstractProvider
@@ -181,7 +180,7 @@ error_log("VK DEBUG 3".print_r($additional,true));
             $response['id'] = $additional['user_id'];
         }
 error_log("VK DEBUG 1".print_r($response,true));
-        return new VkontakteResourceOwner($response);
+        return new VkontakteUser($response);
     }
 
     /**
@@ -191,7 +190,7 @@ error_log("VK DEBUG 1".print_r($response,true));
      * @param AccessToken|null $token Current user if empty
      * @param array            $params
      *
-     * @return VkontakteResourceOwner[]
+     * @return VkontakteUser[]
      */
     public function usersGet(array $ids = [], AccessToken $token = null, array $params = [])
     {
@@ -212,7 +211,7 @@ error_log("VK DEBUG SCOPES".print_r($this->userFields,true));
         $response   = $this->getResponse($this->createRequest(static::METHOD_GET, $url, $token, []))['response'];
         $users      = !empty($response['items']) ? $response['items'] : $response;
         $array2user = function ($userData) {
-            return new VkontakteResourceOwner($userData);
+            return new VkontakteUser($userData);
         };
 
         return array_map($array2user, $users);
@@ -224,7 +223,7 @@ error_log("VK DEBUG SCOPES".print_r($this->userFields,true));
      * @param AccessToken|null $token
      * @param array            $params
      *
-     * @return VkontakteResourceOwner[]
+     * @return VkontakteUser[]
      */
     public function friendsGet($userId, AccessToken $token = null, array $params = [])
     {
@@ -245,7 +244,7 @@ error_log("VK DEBUG SCOPES".print_r($this->userFields,true));
                 $friendData = ['id' => $friendData];
             }
 
-            return new VkontakteResourceOwner($friendData);
+            return new VkontakteUser($friendData);
         };
 
         return array_map($array2friend, $friends);
